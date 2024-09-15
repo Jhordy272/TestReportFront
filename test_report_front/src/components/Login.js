@@ -1,69 +1,72 @@
 import React, { useState } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
 
     const loginData = {
       username,
-      password
+      password,
     };
 
+    console.log('Cuerpo de la solicitud (request body):', JSON.stringify(loginData));
+
     try {
-      console.log('Cuerpo de la solicitud (request body):', JSON.stringify(loginData));
-      const response = await fetch('http://localhost:8080/auth/login', {
-        method: 'POST',
+      const response = await axios.post('http://localhost:8080/auth/login', loginData, {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(loginData),
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      if (response.status === 200) {
+        const data = response.data;
+        
+        // Guardar el token o los datos de usuario en el localStorage o en el estado de la app
+        localStorage.setItem('token', data.token); // Si estás usando JWT o algún token
         console.log('Login exitoso:', data);
 
-        localStorage.setItem('token', data.token);
+        // Redirigir a otra página (por ejemplo, un dashboard)
+        navigate('/Admin'); // Ruta a la que quieres redirigir
       } else {
-        setError('Usuario o contraseña incorrectos');
+        setErrorMessage('Login fallido');
       }
     } catch (error) {
       console.error('Error en la solicitud:', error);
-      setError('Ocurrió un error al intentar iniciar sesión');
+      setErrorMessage('Error en la solicitud. Inténtalo de nuevo más tarde.');
     }
   };
 
   return (
     <div>
       <h2>Iniciar Sesión</h2>
+      {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
       <form onSubmit={handleSubmit}>
         <div>
-          <label htmlFor="username">Usuario:</label>
+          <label>Usuario:</label>
           <input
             type="text"
-            id="username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
           />
         </div>
         <div>
-          <label htmlFor="password">Contraseña:</label>
+          <label>Contraseña:</label>
           <input
             type="password"
-            id="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
           />
         </div>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-        <button type="submit">Iniciar sesión</button>
+        <button type="submit">Iniciar Sesión</button>
       </form>
     </div>
   );
